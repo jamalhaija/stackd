@@ -289,6 +289,7 @@ $onion->run();
 
 ### Stackd Class
 The is the main middleware stack runner. Object instantiated with `new Stackd`.
+
 | Method                                     | Description
 |--------------------------------------------|-------------
 | add (_mixed middleware_)                   | Add _middleware_ to the middleware stack. _middleware_ can be an object, function, or class name denoted with ::class.
