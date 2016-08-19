@@ -12,7 +12,7 @@ Stackd is comprised of two main concepts:
 * Middleware objects or functions which represent the various components of our application
 
 ### Simple example
-```
+```php
 //Create new middleware controller
 $onion = new Stackd;
 
@@ -37,7 +37,7 @@ The `next()` method invokes the next component's `call()` method. The `next()` m
 
 In an example:
 
-```
+```php
 class MyMiddleware extends Middleware
 {
    public function call()
@@ -57,10 +57,10 @@ class MyMiddleware extends Middleware
 ### Anonymous function
 A middleware component can also be an anonymous function and may use the Stackd object's `next()` method:
 
-```
+```php
 $onion = new Stackd;
 
-$onion->add(function() {
+$onion->add(function() use ($onion) {
     //Do something before
     
     //Call next middleware component
@@ -75,7 +75,7 @@ Middleware components can also be added as a class name. In this case, the objec
 
 We must ensure to use `::class` when adding class names to our stack:
 
-```
+```php
 $onion = new Stackd;
 
 $onion->add(ClassName::class);
@@ -89,7 +89,7 @@ If a `return` statement is made before calling the `next()` method in a middlewa
 
 For example, if we have a stack of components ABCDE, and component D has a `return` statement in this scenario, then component E will not be reached, and the execution order will be ABCDCBA:
 
-```
+```php
 class D extends Middleware
 {
     public function call()
@@ -109,7 +109,7 @@ If the `next()` method is not called from within a middleware component, then ex
 ## Dependency injection
 Dependencies can be injected via the `inject()` method.
 
-```
+```php
 $onion = new Stackd;
 
 $onion->inject('myService', new SomeService);
@@ -120,7 +120,7 @@ $onion->inject('myDependency', $someDependency);
 
 Dependencies can then be accessed from within the middleware component:
 
-```
+```php
 class MyMiddleware extends Middleware
 {
     public function call()
@@ -135,8 +135,8 @@ class MyMiddleware extends Middleware
 
 Or via the `Stackd` instance itself:
 
-```
-$onion->add(function() {
+```php
+$onion->add(function() use ($onion) {
     $onion->myService->doSomething();
     
     $onion->next();
@@ -145,7 +145,7 @@ $onion->add(function() {
 
 There are no restrictions to what can be injected into the container. Stackd essentially acts as a parameter bag.
 
-```
+```php
 $onion->inject('someService', new ClassObject);
 $onion->inject('someDependency', ClassName::class);
 $onion->inject('functionDependency', function() {...});
@@ -158,12 +158,12 @@ All objects and variables are injected into the middleware component by referenc
 
 If we want a local object to be created within our class, for example, we should pass the class name instead of an instantiated object.
 
-```
+```php
 //ServiceClass has a member with value of false
 $onion->inject('myObject', new ServiceClass);
 $onion->inject('myClass', ServiceClass::class);
 
-$onion->add(function() {
+$onion->add(function() use ($onion) {
     //Set member value on myObject
     $onion->myObject->member = true;
     
@@ -174,7 +174,7 @@ $onion->add(function() {
     $onion->next();
 });
 
-$onion->add(function() {
+$onion->add(function() use ($onion) {
     echo $onion->myObject->member; //true; set in previous middleware
     
     $newObj = new $onion->myClass;
@@ -184,12 +184,12 @@ $onion->add(function() {
 
 Also, we can keep in mind that anonymous functions can be used to create new instances acting as a factory-type construct:
 
-```
+```php
 $onion->inject('myFactory', function() {
     return new SomeClass;
 });
 
-$onion->add(function() {
+$onion->add(function() use ($onion) {
     $obj = $onion->myFactory(); //New instance of SomeClass
 });
 
@@ -212,7 +212,7 @@ The entire purpose of Stackd's dependency container is to share dependencies acr
 
 To inject layer-specific dependencies only into the middleware components that need them, we can do so through the component's constructor.
 
-```
+```php
 $onion = new Stackd();
 
 $onion->inject('sharedService', new SharedService);
@@ -224,7 +224,7 @@ $onion->run();
 
 In the middleware component, we can handle it as:
 
-```
+```php
 class MyMiddleware extends Middleware
 {
     private $mySpecificDependency;
@@ -251,7 +251,7 @@ Stackd is really a pattern more than a framework or library, trying to solve a s
 
 Here's an example of how we may use this pattern to rapidly build the foundation to our application:
 
-```
+```php
 include 'autoloader.php';
 
 //3rd party dependencies
@@ -284,3 +284,23 @@ $onion->add(function() use ($onion, $router) {
 //Run the stack
 $onion->run();
 ```
+
+## API Reference
+
+### Stackd Class
+The is the main middleware stack runner. Object instantiated with `new Stackd`.
+| Method                                     | Description
+|--------------------------------------------|-------------
+| add (_mixed middleware_)                   | Add _middleware_ to the middleware stack. _middleware_ can be an object, function, or class name denoted with ::class.
+| inject (_string name_, _mixed dependency_) | Inject a _dependency_ to be shared across all layers of the stack (available to every middleware component).
+| next (_void_)                              | Invoke the call() method of the next middleware component. Useful to invoke the next middleware from an anonymous function.
+| run (_void_)                               | Run through the middleware stack from top to bottom, then again, bottom to top.
+
+### Middleware Class
+If the middleware component is a class, it should extend the `Middleware` class.
+
+The middleware component class must have a `call()` method to be invoked by the previous middleware component.
+
+| Method        | Description
+|---------------|-------------
+| next (_void_) | Invoke the next middleware component
