@@ -132,7 +132,7 @@ class MyMiddleware extends Middleware
 ## API Reference
 
 ### Stackd Class
-The is the main middleware stack runner.
+The Stackd class is the main middleware stack runner.
 
 | Method                                         | Description
 |------------------------------------------------|-------------
