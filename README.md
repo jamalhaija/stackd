@@ -34,7 +34,6 @@ The middleware components themselves can be:
 
 * Objects
 * Class names
-* Anonymous functions
 
 ### Middleware : Objects
 Middleware objects must be of a class that extends Stackd's `Middleware` class, which provides a `call()` method that will be invoked when the middleware component is reached in the stack.
@@ -65,11 +64,9 @@ As in the above example, the next middleware is invoked by calling the `next()` 
 ### Middleware : Class Names
 Class names can be provided as middleware components instead of objects.
 
-The only difference is that instantiation of the object will take place just in time for it to be invoked, instead of during the initialization of the middleware stack.
+The class will be instantiated as soon as it is added to the stack, then it will be handled in exactly the same way as a middleware object would (as described in the above section).
 
-Once the object is instantiated, then it will be handled in exactly the same way as a middleware object would (as described in the above section).
-
-When adding class names, you must ensure to use the `::class` notation:
+When adding class names, you must ensure to use the `::class` notation as the class is instantiated directly off the string name:
 
 ```php
 $onion = new Stackd(new Request, new Response);
@@ -78,24 +75,6 @@ $onion->add(MyClass::class);
 $onion->add(AnotherClass::class);
 
 $onion->run();
-```
-
-### Middleware : Anonymous Functions
-Middleware components can also be anonymous functions (or any callables). When a function is provided, that function acts as the `call()` method.
-
-The `next()` method can be invoked by using the Stackd object:
-
-```php
-$onion = new Stackd(new Request, new Response);
-
-$onion->add(function($request, $response) use ($onion) {
-    //Do something before
-    
-    //Call the next middleware component
-    $response = $onion->next($request, $response);
-    
-    //So something after
-});
 ```
 
 ### The next() method
@@ -137,8 +116,7 @@ The Stackd class is the main middleware stack runner.
 | Method                                         | Description
 |------------------------------------------------|-------------
 | __contruct (_mixed request_, _mixed response_) | Instantiate a Stackd object and pass a representation of a request and a response.
-| add (_mixed middleware_)                       | Add _middleware_ to the middleware stack. _middleware_ can be an object, function, or class name denoted with ::class.
-| next (_mixed request_, _mixed response_)       | Invoke the call() method of the next middleware component. Useful to invoke the next middleware from an anonymous function.
+| add (_mixed middleware_)                       | Add _middleware_ to the middleware stack. _middleware_ can be an object or class name denoted with ::class.
 | run (_void_)                                   | Run through the middleware stack from top to bottom, then again, bottom to top.
 
 ### Middleware Class

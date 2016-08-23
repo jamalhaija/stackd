@@ -11,7 +11,7 @@ class Stackd
     /**
      * The stack of middlewares
      */
-    private $stack;
+    private $stack = [];
     /**
      * Request object
      */
@@ -43,11 +43,19 @@ class Stackd
      */
     public function add($middleware)
     {
-        if (!is_callable($middleware) AND !$middleware instanceof Middleware) {
-            throw new StackdException('Middleware must be instance of Middleware or a callable.');
+        if (is_string($middleware)) {
+            $middleware = new $middleware();
         }
         
-        $this->stack[] = $middleware;
+        if (!$middleware instanceof Middleware) {
+            throw new StackdException('Middleware must be instance of Middleware.');
+        }
+        
+        if (isset($this->stack[0])) {
+            $this->stack[0]->__inject($middleware);
+        }
+        
+        array_unshift($this->stack, $middleware);
     }
     
     /**
@@ -55,8 +63,12 @@ class Stackd
      */
     public function run()
     {
-        if (count($this->stack) === 0) {
-            throw new StackdException('The stack is empty. Nothing to run.');
+        if (empty($this->stack)) {
+            throw new StackdException('Tried to run an empty middleware stack.');
         }
+        
+        $invoker = end($this->stack);
+        
+        return $invoker->call($this->request, $this->response);
     }
 }
